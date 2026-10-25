@@ -33,7 +33,7 @@ Grupo: Alexandre Malta, Christiano Santos, Rafael Santana, João dos Anjos e Lui
 | matricula | INTEGER | Chave primária com autoincremento |
 | nome | VARCHAR(100) | Nome completo |
 | email | VARCHAR(150) | E-mail único |
-| telefone | VARCHAR(11) | Exatamente 11 números |
+| telefone | VARCHAR(11) | Telefone único, exatamente 11 números |
 | tipo_pessoa_id | INTEGER | FK para `tipos_pessoa.id` |
 | data_criacao | DATETIME | Data de criação automática |
 

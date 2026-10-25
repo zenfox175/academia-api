@@ -1,6 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
@@ -36,6 +37,33 @@ def _salvar_ou_409(db: Session, mensagem: str) -> None:
             status_code=status.HTTP_409_CONFLICT,
             detail=mensagem,
         )
+
+
+def _garantir_email_e_telefone_unicos(
+    db: Session,
+    email: str | None = None,
+    telefone: str | None = None,
+    ignorar_matricula: int | None = None,
+) -> None:
+    if email is not None:
+        query = db.query(models.Pessoa).filter(func.lower(models.Pessoa.email) == email.lower())
+        if ignorar_matricula is not None:
+            query = query.filter(models.Pessoa.matricula != ignorar_matricula)
+        if query.first():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="E-mail já cadastrado para outra pessoa.",
+            )
+
+    if telefone is not None:
+        query = db.query(models.Pessoa).filter(models.Pessoa.telefone == telefone)
+        if ignorar_matricula is not None:
+            query = query.filter(models.Pessoa.matricula != ignorar_matricula)
+        if query.first():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Telefone já cadastrado para outra pessoa.",
+            )
 
 
 def _validar_tipo_pessoa(tipo_pessoa_id: int, db: Session) -> None:
@@ -87,9 +115,10 @@ def cadastrar_pessoa(
     db: Session = Depends(get_db),
 ):
     _validar_tipo_pessoa(pessoa.tipo_pessoa_id, db)
+    _garantir_email_e_telefone_unicos(db, pessoa.email, pessoa.telefone)
     nova_pessoa = models.Pessoa(**pessoa.model_dump())
     db.add(nova_pessoa)
-    _salvar_ou_409(db, "E-mail já cadastrado.")
+    _salvar_ou_409(db, "E-mail ou telefone já cadastrado para outra pessoa.")
     return _buscar_pessoa_ou_404(nova_pessoa.matricula, db)
 
 
@@ -105,10 +134,17 @@ def atualizar_pessoa(
     if "tipo_pessoa_id" in alteracoes:
         _validar_tipo_pessoa(alteracoes["tipo_pessoa_id"], db)
 
+    _garantir_email_e_telefone_unicos(
+        db,
+        email=alteracoes.get("email"),
+        telefone=alteracoes.get("telefone"),
+        ignorar_matricula=matricula,
+    )
+
     for campo, valor in alteracoes.items():
         setattr(pessoa, campo, valor)
 
-    _salvar_ou_409(db, "E-mail já cadastrado.")
+    _salvar_ou_409(db, "E-mail ou telefone já cadastrado para outra pessoa.")
     return _buscar_pessoa_ou_404(matricula, db)
 
 

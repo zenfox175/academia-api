@@ -19,7 +19,7 @@ class Pessoa(Base):
     matricula = Column(Integer, primary_key=True, autoincrement=True, index=True)
     nome = Column(String(100), nullable=False, index=True)
     email = Column(String(150), nullable=False, unique=True, index=True)
-    telefone = Column(String(11), nullable=False, index=True)
+    telefone = Column(String(11), nullable=False, unique=True, index=True)
     tipo_pessoa_id = Column(Integer, ForeignKey("tipos_pessoa.id"), nullable=False, index=True)
     data_criacao = Column(DateTime, nullable=False, server_default=func.current_timestamp())
 
