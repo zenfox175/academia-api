@@ -50,6 +50,8 @@ def _mensagem_erro(erro: dict) -> str:
 
     if tipo == "missing":
         return "Campo obrigatório."
+    if tipo in ("string_type", "int_type", "int_parsing") and erro.get("input") is None:
+        return "Este campo não pode ser nulo."
     if tipo == "string_type":
         return "Deve ser um texto."
     if tipo in ("int_type", "int_parsing"):

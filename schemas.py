@@ -26,10 +26,12 @@ REGEX_EMAIL = re.compile(
 
 def _texto_obrigatorio(minimo: int, maximo: int) -> BeforeValidator:
     def validar(valor, info: ValidationInfo):
+        campo = info.field_name
+        if valor is None:
+            raise ValueError(f"O campo '{campo}' não pode ser nulo.")
         if not isinstance(valor, str):
             return valor
         valor = valor.strip()
-        campo = info.field_name
         if not valor:
             raise ValueError(f"O campo '{campo}' não pode ficar vazio nem conter apenas espaços.")
         if len(valor) < minimo:
@@ -42,22 +44,12 @@ def _texto_obrigatorio(minimo: int, maximo: int) -> BeforeValidator:
 
 
 def _texto_opcional(maximo: int) -> BeforeValidator:
-    def validar(valor, info: ValidationInfo):
-        if valor is None:
-            return None
-        if not isinstance(valor, str):
-            return valor
-        valor = valor.strip()
-        if not valor:
-            return None
-        if len(valor) > maximo:
-            raise ValueError(f"O campo '{info.field_name}' deve ter no máximo {maximo} caracteres.")
-        return valor
-
-    return BeforeValidator(validar)
+    return _texto_obrigatorio(1, maximo)
 
 
 def _validar_email(valor, info: ValidationInfo):
+    if valor is None:
+        raise ValueError("O campo 'email' não pode ser nulo.")
     if not isinstance(valor, str):
         return valor
     valor = valor.strip().lower()
@@ -71,6 +63,8 @@ def _validar_email(valor, info: ValidationInfo):
 
 
 def _validar_telefone(valor, info: ValidationInfo):
+    if valor is None:
+        raise ValueError("O campo 'telefone' não pode ser nulo.")
     if not isinstance(valor, str):
         return valor
     valor = valor.strip()
@@ -183,9 +177,9 @@ class MatriculaAlunoResponseSchema(BaseModel):
 
 class TreinoBaseSchema(BaseModel):
     nome: Nome
-    descricao: Annotated[str | None, _texto_opcional(1000)] = None
-    objetivo: Annotated[str | None, _texto_opcional(150)] = None
-    nivel: Annotated[str | None, _texto_opcional(30)] = None
+    descricao: Annotated[str, _texto_opcional(1000)] = None
+    objetivo: Annotated[str, _texto_opcional(150)] = None
+    nivel: Annotated[str, _texto_opcional(30)] = None
 
 
 class TreinoCreateSchema(TreinoBaseSchema):
@@ -194,9 +188,9 @@ class TreinoCreateSchema(TreinoBaseSchema):
 
 class TreinoUpdateSchema(BaseModel):
     nome: Nome = None
-    descricao: Annotated[str | None, _texto_opcional(1000)] = None
-    objetivo: Annotated[str | None, _texto_opcional(150)] = None
-    nivel: Annotated[str | None, _texto_opcional(30)] = None
+    descricao: Annotated[str, _texto_opcional(1000)] = None
+    objetivo: Annotated[str, _texto_opcional(150)] = None
+    nivel: Annotated[str, _texto_opcional(30)] = None
 
 
 class TreinoResponseSchema(BaseModel):
@@ -214,13 +208,13 @@ class FichaTreinoCreateSchema(BaseModel):
     aluno_matricula: int = Field(gt=0)
     personal_matricula: int = Field(gt=0)
     treino_id: int = Field(gt=0)
-    observacoes: Annotated[str | None, _texto_opcional(1500)] = None
+    observacoes: Annotated[str, _texto_opcional(1500)] = None
 
 
 class FichaTreinoUpdateSchema(BaseModel):
-    personal_matricula: int | None = Field(default=None, gt=0)
-    treino_id: int | None = Field(default=None, gt=0)
-    observacoes: Annotated[str | None, _texto_opcional(1500)] = None
+    personal_matricula: int = Field(default=None, gt=0)
+    treino_id: int = Field(default=None, gt=0)
+    observacoes: Annotated[str, _texto_opcional(1500)] = None
 
 
 class FichaTreinoResponseSchema(BaseModel):
